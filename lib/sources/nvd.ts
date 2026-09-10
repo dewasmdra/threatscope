@@ -8,6 +8,13 @@ const ENDPOINT = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 const MAX_PAGE = 2000;
 /** Safety valve so a bad date range can't spin forever. */
 const MAX_PAGES = 12;
+/**
+ * Wall-clock ceiling for one window walk, kept under the 60s `maxDuration` the report routes
+ * declare. Without an API key each page costs a 6.5s throttle gap, so a busy month can outrun
+ * the platform's function limit and return nothing at all. Stopping early instead yields a
+ * partial window flagged `complete: false`, which the UI already reports via SourceStatus.
+ */
+const WALK_BUDGET_MS = 45_000;
 
 const API_KEY = process.env.NVD_API_KEY;
 /**
@@ -188,6 +195,7 @@ function dayKeys(start: Date, end: Date) {
  * walk rather than a single request.
  */
 async function walkWindow(start: Date, end: Date, latestN: number): Promise<CveWindow> {
+  const deadline = Date.now() + WALK_BUDGET_MS;
   const first = await nvdPage(start, end, 0, MAX_PAGE);
   if (!first) return emptyWindow(start, end);
 
@@ -222,7 +230,7 @@ async function walkWindow(start: Date, end: Date, latestN: number): Promise<CveW
   let index = MAX_PAGE;
   let complete = true;
   while (index < total) {
-    if (pages >= MAX_PAGES) {
+    if (pages >= MAX_PAGES || Date.now() >= deadline) {
       complete = false;
       break;
     }
