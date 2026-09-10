@@ -265,8 +265,15 @@ async function walkWindow(start: Date, end: Date, latestN: number): Promise<CveW
   };
 }
 
-const walkCached = async (startIso: string, endIso: string, latestN: number) =>
-  walkWindow(new Date(startIso), new Date(endIso), latestN);
+const walkCached = async (startIso: string, endIso: string, latestN: number) => {
+  const window = await walkWindow(new Date(startIso), new Date(endIso), latestN);
+  // A walk that came back with nothing is a transient failure, not a result. Returning it would
+  // let unstable_cache store the empty window for the full TTL — 30 minutes for a live window,
+  // a week for an archived one — so every later request serves the failure instead of retrying.
+  // Throwing keeps it out of the cache; getCveWindow's catch still degrades gracefully.
+  if (window.pages === 0) throw new Error("NVD unreachable");
+  return window;
+};
 
 /** Windows that are still moving need frequent refresh... */
 const cachedWindowLive = unstable_cache(walkCached, ["nvd-cve-window-live-v1"], {
