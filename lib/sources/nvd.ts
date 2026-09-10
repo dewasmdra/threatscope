@@ -9,12 +9,17 @@ const MAX_PAGE = 2000;
 /** Safety valve so a bad date range can't spin forever. */
 const MAX_PAGES = 12;
 /**
- * Wall-clock ceiling for one window walk, kept under the 60s `maxDuration` the report routes
- * declare. Without an API key each page costs a 6.5s throttle gap, so a busy month can outrun
- * the platform's function limit and return nothing at all. Stopping early instead yields a
- * partial window flagged `complete: false`, which the UI already reports via SourceStatus.
+ * Wall-clock ceiling for one window walk, kept well under the 60s `maxDuration` the report
+ * routes declare. A busy month can outrun the platform's function limit and return nothing at
+ * all; stopping early instead yields a partial window flagged `complete: false`, which the UI
+ * already reports via SourceStatus.
+ *
+ * The walk is not the only thing spending that 60s — the KEV and leak-site fetches run
+ * alongside it, the previous month's total costs another throttled request after it, and the
+ * page still has to render. 45s left too little room and busy months kept dying at the limit,
+ * so the walk gets half the budget and the rest of the request gets the other half.
  */
-const WALK_BUDGET_MS = 45_000;
+const WALK_BUDGET_MS = 30_000;
 
 const API_KEY = process.env.NVD_API_KEY;
 /**
@@ -134,7 +139,9 @@ async function nvdPage(
         },
         // Pages run to several MB, past the data cache ceiling — the aggregate is cached instead.
         cache: "no-store",
-        signal: AbortSignal.timeout(60_000),
+        // A page runs to several MB and a stalled one must not eat the whole function budget:
+        // this has to stay comfortably below WALK_BUDGET_MS so the walk can degrade instead.
+        signal: AbortSignal.timeout(25_000),
       });
       if (!res.ok) return null;
       return (await res.json()) as NvdResponse;
