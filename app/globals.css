@@ -1,26 +1,171 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-void: #05070d;
+  --color-panel: #0b0f1a;
+  --color-panel-2: #101725;
+  --color-edge: #1b2436;
+  --color-muted: #7d8aa3;
+  --color-ink: #e8edf7;
+  --color-neon: #22e5c8;
+  --color-neon-2: #4d8bff;
+  --color-alert: #f43f5e;
+  --color-warn: #fb923c;
+  --color-amber: #facc15;
+  --color-lime: #34d399;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient grid + aurora backdrop, painted behind every page. */
+.backdrop-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(to right, rgba(77, 139, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(77, 139, 255, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+
+.backdrop-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background:
+    radial-gradient(60rem 32rem at 12% -8%, rgba(34, 229, 200, 0.14), transparent 60%),
+    radial-gradient(50rem 30rem at 88% 4%, rgba(77, 139, 255, 0.16), transparent 62%),
+    radial-gradient(40rem 26rem at 50% 100%, rgba(255, 77, 109, 0.08), transparent 60%);
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(16, 23, 37, 0.86), rgba(11, 15, 26, 0.86));
+  border: 1px solid var(--color-edge);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.panel-hover {
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+.panel-hover:hover {
+  border-color: rgba(34, 229, 200, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -18px rgba(34, 229, 200, 0.55);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sev-critical { color: #ffa2b3; border-color: rgba(244, 63, 94, 0.5); background: rgba(244, 63, 94, 0.14); }
+.sev-high     { color: #fdba74; border-color: rgba(251, 146, 60, 0.5); background: rgba(251, 146, 60, 0.13); }
+.sev-medium   { color: #fde68a; border-color: rgba(250, 204, 21, 0.45); background: rgba(250, 204, 21, 0.11); }
+.sev-low      { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.11); }
+.sev-none     { color: #9fb0ca; border-color: rgba(125, 138, 163, 0.45); background: rgba(125, 138, 163, 0.1); }
+
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 220ms ease;
+}
+.link-underline:hover { background-size: 100% 1px; }
+
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-neon);
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--color-neon);
+  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 520ms ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track, .pulse-dot::after, .rise { animation: none; }
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #070a12; }
+::-webkit-scrollbar-thumb { background: #1e2942; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #2b3a5c; }
+
+/* Severity chips — ordered status scale, always paired with a text label. */
+
+/* Print: drop the ambient chrome so a report exports as a clean PDF. */
+@media print {
+  .backdrop-grid,
+  .backdrop-aurora,
+  header.sticky,
+  footer {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .panel {
+    background: #fff !important;
+    border-color: #d5dae3 !important;
+    backdrop-filter: none !important;
+    break-inside: avoid;
+  }
+  .text-ink, h1, h2, h3, td, th { color: #111 !important; }
+  .text-muted { color: #4a5568 !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  a { text-decoration: none !important; }
 }
