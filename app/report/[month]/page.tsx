@@ -14,6 +14,8 @@ import {
 import { SectionHeading, SourceStatus, BarList } from "@/components/ui";
 import { TrendChart, SeverityBar } from "@/components/charts";
 import { DeltaBadge, MonthPicker, ExportBar } from "@/components/report-ui";
+import { ReportSummary } from "@/components/report-summary";
+import { reportToTextAll } from "@/lib/report-summary";
 import { countryName, formatDate, compact } from "@/lib/format";
 
 // A month is up to seven NVD pages — far past the 60s build-time prerender cap. Returning no
@@ -132,6 +134,7 @@ export default async function MonthlyReportPage({
 async function ReportBody({ month }: { month: string }) {
   const report = await buildMonthlyReport(month);
   const csv = reportToCsv(report);
+  const summaries = reportToTextAll(report);
 
   const cveDelta = delta(report.cve.total, report.cvePrevTotal);
   const kevDelta = delta(report.kev.length, report.kevPrevCount);
@@ -311,6 +314,8 @@ async function ReportBody({ month }: { month: string }) {
           />
         </div>
       </section>
+
+      <ReportSummary summaries={summaries} />
 
       <section className="panel p-5 text-xs leading-relaxed text-muted">
         <h2 className="mb-2 text-sm font-semibold text-ink">Method and caveats</h2>

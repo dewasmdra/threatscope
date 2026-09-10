@@ -35,10 +35,10 @@ export const SEVERITY_STYLES: Record<Severity, { label: string; className: strin
   NONE: { label: "Unscored", className: "sev-none", hex: "#64748b" },
 };
 
-export function countryName(code: string) {
+export function countryName(code: string, locale = "en") {
   if (!code) return "Unknown";
   try {
-    return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code;
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
   } catch {
     return code;
   }
